@@ -12,6 +12,7 @@ const jwtSecret = require("crypto").randomBytes(16); // Create HMAC secret of 25
 // console.log(`Token secret: ${jwtSecret.toString("base64")}`);
 
 const port = 3000;
+var cookieTimer;
 
 const app = express();
 app.use(logger("dev"));
@@ -91,16 +92,18 @@ app.get(
 );
 
 app.get("/login", (req, res) => {
-  res.sendFile(path.join(__dirname, "login.html"));
+  res.sendFile(path.join(__dirname, "/views/login.html"));
 });
 
 app.get("/bad-credentials", (req, res) => {
-  res.sendFile(path.join(__dirname, "badCredentials.html"));
+  res.sendFile(path.join(__dirname, "/views/badCredentials.html"));
 });
 
 app.get("/logout", (req, res) => {
-  res.cookie("jwtCookie", { maxAge: 0 });
-  res.send("Logged out");
+  res.clearCookie("jwtCookie");
+  clearTimeout(cookieTimer);
+  console.log("Cookie deleted due a logout");
+  res.sendFile(path.join(__dirname, "/views/logout.html"));
 });
 
 app.post(
@@ -128,7 +131,7 @@ app.post(
         httpOnly: true,
       });
       console.log("Cookie created");
-      setTimeout(() => console.log("Cookie has expired"), expiresInMilis);
+      cookieTimer = setTimeout(() => console.log("Cookie has expired"), expiresInMilis);
     } else {
       console.log("Cookie exists");
     }
