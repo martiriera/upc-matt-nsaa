@@ -18,14 +18,21 @@ app.use(logger("dev"));
 app.use(express.urlencoded({ extended: true })); // To access the formulary
 app.use(cookieParser());
 
+/*
+Configure the local strategy for use by Passport.
+The local strategy requires a `verify` function which receives the credentials
+(`username` and `password`) submitted by the user.  The function must verify
+that the username and password are correct and then invoke `done` with a user
+object, which will be set at `req.user` in route handlers after authentication.
+*/
 passport.use(
-  // Add strategies
   "local",
   new LocalStrategy(
     {
       usernameField: "username",
       passwordField: "password",
-      session: false,
+      session: false /* we will store a JWT in the cookie with all the required session data. 
+      Our server does not need to keep a session, it's stateless*/,
     },
     function (username, password, done) {
       if (username === "walrus" && password == "walrus") {
@@ -33,9 +40,15 @@ passport.use(
           username: "walrus",
           description: "you can visit the fortune teller",
         };
-        done(null, user);
+        done(
+          null,
+          user
+        ); /* the first argument for done is the error, if any. In our case no error so that null. 
+        The object user will be added by the passport middleware to req.user and thus will be available there for the 
+        next middleware and/or the route handler */
+      } else {
+        done(null, false); // in passport returning false as the user object means that the authentication process failed.
       }
-      return done(null, false);
     }
   )
 );
@@ -60,6 +73,7 @@ passport.use(
     }
   )
 );
+
 app.use(passport.initialize()); // Initialize the passport
 
 app.use(function (err, req, res, next) {
@@ -83,10 +97,12 @@ app.get("/login", (req, res) => {
 app.get("/bad-credentials", (req, res) => {
   res.sendFile(path.join(__dirname, "badCredentials.html"));
 });
+
 app.get("/logout", (req, res) => {
   res.cookie("jwtCookie", { maxAge: 0 });
   res.send("Logged out");
 });
+
 app.post(
   "/login",
   // we add a middleware "on the fly" to authenticate
@@ -101,7 +117,7 @@ app.post(
       aud: "localhost:300", // Audience, may change (i.e. /part1, /part2...)
       exp: Math.floor(Date.now() / 1000) + 604800, // Expiration, when we want the token to expire (in this case 1 week from now)
       role: "user", // Private JWT field
-  };
+    };
     const token = jwt.sign(payload, jwtSecret);
 
     var cookie = req.cookies.jwtCookie;
@@ -110,7 +126,7 @@ app.post(
       res.cookie("jwtCookie", token, {
         maxAge: expiresInMilis,
         httpOnly: true,
-});
+      });
       console.log("Cookie created");
       setTimeout(() => console.log("Cookie has expired"), expiresInMilis);
     } else {
