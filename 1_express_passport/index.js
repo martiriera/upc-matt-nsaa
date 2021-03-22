@@ -112,9 +112,9 @@ app.post(
   }), // if fail, redirect to /login GET version
   (req, res) => {
     const payload = {
-      iss: "localhost:300", // Issuer, usually the domain name
+      iss: "localhost:3000", // Issuer, usually the domain name
       sub: req.user.username, // User, we can get it from the request
-      aud: "localhost:300", // Audience, may change (i.e. /part1, /part2...)
+      aud: "localhost:3000", // Audience, may change (i.e. /part1, /part2...)
       exp: Math.floor(Date.now() / 1000) + 604800, // Expiration, when we want the token to expire (in this case 1 week from now)
       role: "user", // Private JWT field
     };
