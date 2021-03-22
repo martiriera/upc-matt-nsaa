@@ -83,6 +83,10 @@ app.get("/login", (req, res) => {
 app.get("/bad-credentials", (req, res) => {
   res.sendFile(path.join(__dirname, "badCredentials.html"));
 });
+app.get("/logout", (req, res) => {
+  res.cookie("jwtCookie", { maxAge: 0 });
+  res.send("Logged out");
+});
 app.post(
   "/login",
   // we add a middleware "on the fly" to authenticate
