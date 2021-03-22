@@ -47,8 +47,8 @@ app.use(function (err, req, res, next) {
 
 app.use(myLogger); // registering a middleware to express
 
-app.get("/", (req, res) => {
-  res.send("Hello world");
+app.get("/login", (req, res) => {
+  res.sendFile(path.join(__dirname, "login.html"));
 });
 
 app.get("/user", (req, res) => {
