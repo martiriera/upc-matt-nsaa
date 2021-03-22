@@ -3,7 +3,10 @@ const express = require("express");
 const logger = require("morgan");
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
+const JWTStrategy = require("passport-jwt").Strategy;
 const jwt = require("jsonwebtoken");
+const fortune = require("fortune-teller");
+const cookieParser = require("cookie-parser");
 
 const jwtSecret = require("crypto").randomBytes(16); // Create HMAC secret of 256 bits (16 random bytes)
 // console.log(`Token secret: ${jwtSecret.toString("base64")}`);
@@ -13,7 +16,7 @@ const port = 3000;
 const app = express();
 app.use(logger("dev"));
 app.use(express.urlencoded({ extended: true })); // To access the formulary
-app.user(express.urlencoded({ extended: true })); // To access the formulary
+app.use(cookieParser());
 
 passport.use(
   // Add strategies
@@ -37,12 +40,26 @@ passport.use(
   )
 );
 
-const myLogger = (req, res, next) => {
-  // next will be used to pass information to next middleware
-  console.log(req);
-  next();
+const cookieExtractor = function (req) {
+  var token = null;
+  if (req && req.cookies) {
+    token = req.cookies["jwtCookie"];
+  }
+  return token;
 };
 
+passport.use(
+  "jwt",
+  new JWTStrategy(
+    {
+      jwtFromRequest: cookieExtractor,
+      secretOrKey: jwtSecret,
+    },
+    function (jwtPayload, done) {
+      return done(null, jwtPayload);
+    }
+  )
+);
 app.use(passport.initialize()); // Initialize the passport
 
 app.use(function (err, req, res, next) {
@@ -51,7 +68,13 @@ app.use(function (err, req, res, next) {
   res.status(500).send("there was an error");
 });
 
-app.use(myLogger); // registering a middleware to express
+app.get(
+  "/",
+  passport.authenticate("jwt", { session: false, failureRedirect: "/login" }),
+  (req, res) => {
+    res.send(fortune.fortune());
+  }
+);
 
 app.get("/login", (req, res) => {
   res.sendFile(path.join(__dirname, "login.html"));
@@ -76,7 +99,22 @@ app.post(
       role: "user", // Private JWT field
   };
     const token = jwt.sign(payload, jwtSecret);
+
+    var cookie = req.cookies.jwtCookie;
+    const expiresInMilis = 30000;
+    if (cookie === undefined) {
+      res.cookie("jwtCookie", token, {
+        maxAge: expiresInMilis,
+        httpOnly: true,
 });
+      console.log("Cookie created");
+      setTimeout(() => console.log("Cookie has expired"), expiresInMilis);
+    } else {
+      console.log("Cookie exists");
+    }
+    res.redirect("/");
+  }
+);
 
 app.listen(port, () => {
   console.log(`Listening at http://localhost:${port}`);
