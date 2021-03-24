@@ -45,21 +45,18 @@ passport.use(
       session: false /* we will store a JWT in the cookie with all the required session data. 
       Our server does not need to keep a session, it's stateless*/,
     },
-    function (username, password, done) {
-      if (username === "walrus" && password == "walrus") {
-        const user = {
-          username: "walrus",
-          description: "you can visit the fortune teller",
-        };
-        done(
-          null,
-          user
-        ); /* the first argument for done is the error, if any. In our case no error so that null. 
-        The object user will be added by the passport middleware to req.user and thus will be available there for the 
-        next middleware and/or the route handler */
-      } else {
-        done(null, false); // in passport returning false as the user object means that the authentication process failed.
+    async function (username, password, done) {
+      const user = await UserModel.findOne({ username });
+      if (!user) {
+        return done(null, false, { message: "User not found" });
       }
+
+      const valid = user.isValidPassword(password);
+      if (!valid) {
+        return done(null, false, { message: "Wrong password" });
+      }
+
+      return done(null, user, { message: "Logged in successfully" });
     }
   )
 );
