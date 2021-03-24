@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <body onload="cookieTimer()">
+    <head>
+      <meta charset="UTF-8" />
+      <title>Fortune teller</title>
+    </head>
+    <script>
+      function cookieTimer(){
+          setTimeout(() => alert("Your credentials have expired"), <%=expires%>)
+      }
+    </script>
+
+    <p style="color: green">Logged in as <b><%=username%></b></p>
+    <b><p>THE FORTUNE TELLER</p></b>
+    <br>
+    <p><%=fortune%></p>
+    <br>
+    <a href="/">I want more fortune</a>
+    <br />
+    <a href="/logout">Log out</a>
+  </body>
+</html>
