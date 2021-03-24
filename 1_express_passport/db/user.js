@@ -1,5 +1,5 @@
-const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
+const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 
 const Schema = mongoose.Schema;
 
@@ -17,7 +17,7 @@ const userSchema = new Schema({
 
 userSchema.pre(
   // Pre-hook to hash pwd before saving it on the db
-  "save",
+  'save',
   async function (next) {
     const hash = await bcrypt.hash(this.password, 12);
     this.password = hash;
@@ -30,6 +30,6 @@ userSchema.methods.isValidPassword = async function (password) {
   return compare;
 };
 
-const UserModel = mongoose.model("user", userSchema);
+const UserModel = mongoose.model('user', userSchema);
 
 module.exports = UserModel;
