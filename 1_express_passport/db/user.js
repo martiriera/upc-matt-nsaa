@@ -18,17 +18,15 @@ const userSchema = new Schema({
 userSchema.pre(
   // Pre-hook to hash pwd before saving it on the db
   "save",
-  function (next) {
-    const user = this;
-    const hash = bcrypt.hash(this.password, 12);
+  async function (next) {
+    const hash = await bcrypt.hash(this.password, 12);
     this.password = hash;
     next(); // Move to next middleware
   }
 );
 
-userSchema.methods.isValidPassword = function (password) {
-  const user = this;
-  const compare = bcrypt.compare(password, user.password);
+userSchema.methods.isValidPassword = async function (password) {
+  const compare = await bcrypt.compare(password, this.password);
   return compare;
 };
 
