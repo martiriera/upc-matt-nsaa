@@ -22,7 +22,9 @@ db.on('error', console.error.bind(console, 'connection error:'));
 mongoose.Promise = global.Promise;
 
 const port = 3000;
+const cookieExpire = 30000;
 var cookieTimer;
+
 const app = express();
 app.use(logger('dev'));
 app.use(express.urlencoded({ extended: true })); // To access the formulary
@@ -96,7 +98,8 @@ app.get(
   '/',
   passport.authenticate('jwt', { session: false, failureRedirect: '/login' }),
   (req, res) => {
-    res.send(fortune.fortune());
+    res.render('index', { fortune: fortune.fortune(), username: req.user.sub, expires: cookieExpire });
+    // res.sendFile(path.join(__dirname, 'views/index.html'));
   }
 );
 
@@ -133,16 +136,15 @@ app.post(
     const token = jwt.sign(payload, jwtSecret);
 
     var cookie = req.cookies.jwtCookie;
-    const expiresInMilis = 30000;
     if (cookie === undefined) {
       res.cookie('jwtCookie', token, {
-        maxAge: expiresInMilis,
+        maxAge: cookieExpire,
         httpOnly: true,
       });
       console.log('Cookie created');
       cookieTimer = setTimeout(
         () => console.log('Cookie has expired'),
-        expiresInMilis
+        cookieExpire
       );
     } else {
       console.log('Cookie exists');
