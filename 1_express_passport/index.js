@@ -7,9 +7,19 @@ const JWTStrategy = require("passport-jwt").Strategy;
 const jwt = require("jsonwebtoken");
 const fortune = require("fortune-teller");
 const cookieParser = require("cookie-parser");
+const UserModel = require("./db/user");
+const mongoose = require("mongoose");
 
 const jwtSecret = require("crypto").randomBytes(16); // Create HMAC secret of 256 bits (16 random bytes)
 // console.log(`Token secret: ${jwtSecret.toString("base64")}`);
+
+mongoose.connect("mongodb://localhost/fortuneteller", {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+});
+const db = mongoose.connection;
+db.on("error", console.error.bind(console, "connection error:"));
+mongoose.Promise = global.Promise;
 
 const port = 3000;
 var cookieTimer;
