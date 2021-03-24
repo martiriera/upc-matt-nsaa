@@ -27,6 +27,9 @@ const app = express();
 app.use(logger('dev'));
 app.use(express.urlencoded({ extended: true })); // To access the formulary
 app.use(cookieParser());
+app.set('views', path.join(__dirname, 'views'));
+app.engine('html', require('ejs').renderFile);
+app.set('view engine', 'html');
 
 /*
 Configure the local strategy for use by Passport.
@@ -98,18 +101,18 @@ app.get(
 );
 
 app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, '/views/login.html'));
+  res.render('login', {});
 });
 
 app.get('/bad-credentials', (req, res) => {
-  res.sendFile(path.join(__dirname, '/views/badCredentials.html'));
+  res.render('badCredentials', {});
 });
 
 app.get('/logout', (req, res) => {
   res.clearCookie('jwtCookie');
   clearTimeout(cookieTimer);
   console.log('Cookie deleted due a logout');
-  res.sendFile(path.join(__dirname, '/views/logout.html'));
+  res.render('logout', {});
 });
 
 app.post(
