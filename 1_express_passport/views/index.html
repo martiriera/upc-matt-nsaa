@@ -7,15 +7,15 @@
     </head>
     <script>
       function cookieTimer(){
-          setTimeout(() => alert("Your credentials have expired"), <%=expires%>)
+          setTimeout(() => alert("Your credentials have expired, please log in again for more fortune"), <%=expires%>)
       }
     </script>
 
     <p style="color: green">Logged in as <b><%=username%></b></p>
     <b><p>THE FORTUNE TELLER</p></b>
-    <br>
+    <br />
     <p><%=fortune%></p>
-    <br>
+    <br />
     <a href="/">I want more fortune</a>
     <br />
     <a href="/logout">Log out</a>
