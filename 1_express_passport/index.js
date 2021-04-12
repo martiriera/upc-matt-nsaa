@@ -11,7 +11,9 @@ const UserModel = require('./db/user');
 const mongoose = require('mongoose');
 
 const jwtSecret = require('crypto').randomBytes(16); // Create HMAC secret of 256 bits (16 random bytes)
-// console.log(`Token secret: ${jwtSecret.toString("base64")}`);
+const port = 3000;
+const cookieExpire = 30000;
+var cookieTimer;
 
 mongoose.connect('mongodb://localhost/fortuneteller', {
   useNewUrlParser: true,
@@ -21,17 +23,22 @@ const db = mongoose.connection;
 db.on('error', console.error.bind(console, 'connection error:'));
 mongoose.Promise = global.Promise;
 
-const port = 3000;
-const cookieExpire = 30000;
-var cookieTimer;
-
 const app = express();
-app.use(logger('dev'));
-app.use(express.urlencoded({ extended: true })); // To access the formulary
-app.use(cookieParser());
 app.set('views', path.join(__dirname, 'views'));
 app.engine('html', require('ejs').renderFile);
 app.set('view engine', 'html');
+
+app.use(logger('dev'));
+app.use(express.urlencoded({ extended: true })); // To access the formulary
+
+app.use(passport.initialize()); // Initialize the passport
+app.use(cookieParser());
+
+app.use(function (err, req, res, next) {
+  // err middleware have a different chain
+  console.log(err.stack);
+  res.status(500).send('there was an error');
+});
 
 /*
 Configure the local strategy for use by Passport.
@@ -86,14 +93,6 @@ passport.use(
   )
 );
 
-app.use(passport.initialize()); // Initialize the passport
-
-app.use(function (err, req, res, next) {
-  // err middleware have a different chain
-  console.log(err.stack);
-  res.status(500).send('there was an error');
-});
-
 app.get(
   '/',
   passport.authenticate('jwt', { session: false, failureRedirect: '/login' }),
@@ -124,7 +123,7 @@ app.post(
   passport.authenticate('local', {
     session: false,
     failureRedirect: '/bad-credentials',
-  }), // if fail, redirect to /login GET version
+  }), // if fail, redirect to bad credentials view
   (req, res) => {
     const payload = {
       iss: 'localhost:3000', // Issuer, usually the domain name
