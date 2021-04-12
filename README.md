@@ -6,6 +6,8 @@ Repo to allocate NSAA web auth class examples
 ### 6.1. Exchange the JWT using cookies
 When a user has successfully authenticated himself with the local strategy, a token is created and signed with the `jwtSecret` of the server. If no cookie has been created yet, the server defines a new one **with the JWT token on it** and it is attached to the `res` object. The server then redirects to the root of the site to tell the fortune to the user. The cookie expires after the milliseconds on the global variable `cookieExpire`. When this happens, a message is registered on the log and also an alert pops up to the user using the webpage (i.e. "Your credentials have expired, please login again for more fortune"). 
 
+Note: Now the cookie expires after 30 secs (for testing purposes), this time may be changed to match the JWT expire claim.
+
 ### 6.2. Create the fortune-teller endpoint
 When a user provides the credentials, the `JWTStrategy` is used to authenticate. The configuration of that strategy is quite simple. It only needs the `cookieExtractor` function (that can be found ond [passport.js docs](http://www.passportjs.org/packages/passport-jwt/#extracting-the-jwt-from-the-request)) and the `jwtSecret`. Now, a browser providing a cookie with a valid JWT (i.e. verified by the server) is able to access the fortune teller without providing the login credentials. So the main page can be refreshed as many times as you want until the token expires.
 
