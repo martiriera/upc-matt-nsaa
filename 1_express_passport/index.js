@@ -12,7 +12,7 @@ const mongoose = require('mongoose');
 
 const jwtSecret = require('crypto').randomBytes(16); // Create HMAC secret of 256 bits (16 random bytes)
 const port = 3000;
-const cookieExpire = 30000;
+const cookieExpire = 30000; // Expire time of the cookie (now 30s for testing). It may be changed to match JWT exp claim.
 var cookieTimer;
 
 mongoose.connect('mongodb://localhost/fortuneteller', {
@@ -98,7 +98,6 @@ app.get(
   passport.authenticate('jwt', { session: false, failureRedirect: '/login' }),
   (req, res) => {
     res.render('index', { fortune: fortune.fortune(), username: req.user.sub, expires: cookieExpire });
-    // res.sendFile(path.join(__dirname, 'views/index.html'));
   }
 );
 
