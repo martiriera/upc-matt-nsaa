@@ -29,7 +29,7 @@ app.engine('html', require('ejs').renderFile);
 app.set('view engine', 'html');
 
 app.use(logger('dev'));
-app.use(express.urlencoded({ extended: true })); // To access the formulary
+app.use(express.urlencoded({ extended: true })); // Middleware to access the formulary
 
 app.use(passport.initialize()); // Initialize the passport
 app.use(cookieParser());
@@ -41,7 +41,6 @@ app.use(function (err, req, res, next) {
 });
 
 /*
-Configure the local strategy for use by Passport.
 The local strategy requires a `verify` function which receives the credentials
 (`username` and `password`) submitted by the user.  The function must verify
 that the username and password are correct and then invoke `done` with a user
@@ -118,11 +117,11 @@ app.get('/logout', (req, res) => {
 
 app.post(
   '/login',
-  // we add a middleware "on the fly" to authenticate
+  // We add a middleware "on the fly" to authenticate
   passport.authenticate('local', {
     session: false,
     failureRedirect: '/bad-credentials',
-  }), // if fail, redirect to bad credentials view
+  }), // If fail, redirect to bad credentials view
   (req, res) => {
     const payload = {
       iss: 'localhost:3000', // Issuer, usually the domain name
@@ -145,7 +144,7 @@ app.post(
         cookieExpire
       );
     } else {
-      console.log('Cookie exists');
+      console.log('Cookie already exists');
     }
     res.redirect('/');
   }
