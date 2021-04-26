@@ -4,6 +4,7 @@ const logger = require('morgan');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const JWTStrategy = require('passport-jwt').Strategy;
+const GitHubStrategy = require('passport-github2').Strategy;
 const jwt = require('jsonwebtoken');
 const fortune = require('fortune-teller');
 const cookieParser = require('cookie-parser');
@@ -24,6 +25,8 @@ db.on('error', console.error.bind(console, 'connection error:'));
 mongoose.Promise = global.Promise;
 
 const app = express();
+var dotenv = require('dotenv');
+dotenv.config();
 app.set('views', path.join(__dirname, 'views'));
 app.engine('html', require('ejs').renderFile);
 app.set('view engine', 'html');
@@ -92,11 +95,28 @@ passport.use(
   )
 );
 
+passport.use(
+  new GitHubStrategy(
+    {
+      clientID: process.env.CLIENT_ID,
+      clientSecret: process.env.CLIENT_SECRET,
+      callbackURL: 'http://localhost:3000/login/oauth/access_token', // Callback of the server
+    },
+    function (accessToken, refreshToken, profile, cb) {
+      return cb(null, {username: profile.username}, { message: 'Logged in successfully' });
+    }
+  )
+);
+
 app.get(
   '/',
   passport.authenticate('jwt', { session: false, failureRedirect: '/login' }),
   (req, res) => {
-    res.render('index', { fortune: fortune.fortune(), username: req.user.sub, expires: cookieExpire });
+    res.render('index', {
+      fortune: fortune.fortune(),
+      username: req.user.sub,
+      expires: cookieExpire,
+    });
   }
 );
 
@@ -123,32 +143,52 @@ app.post(
     failureRedirect: '/bad-credentials',
   }), // If fail, redirect to bad credentials view
   (req, res) => {
-    const payload = {
-      iss: 'localhost:3000', // Issuer, usually the domain name
-      sub: req.user.username, // User, we can get it from the request
-      aud: 'localhost:3000', // Audience, may change (i.e. /part1, /part2...)
-      exp: Math.floor(Date.now() / 1000) + 604800, // Expiration, when we want the token to expire (in this case 1 week from now)
-      role: 'user', // Private JWT field
-    };
-    const token = jwt.sign(payload, jwtSecret);
-
-    var cookie = req.cookies.jwtCookie;
-    if (cookie === undefined) {
-      res.cookie('jwtCookie', token, {
-        maxAge: cookieExpire,
-        httpOnly: true,
-      });
-      console.log('Cookie created');
-      cookieTimer = setTimeout(
-        () => console.log('Cookie has expired'),
-        cookieExpire
-      );
-    } else {
-      console.log('Cookie already exists');
-    }
-    res.redirect('/');
+    createCookieWithJWT(req, res);
   }
 );
+
+app.get(
+  '/login/github',
+  passport.authenticate('github', { scope: ['user:email'] })
+);
+
+app.get(
+  '/login/oauth/access_token',
+  passport.authenticate('github', {
+    session: false,
+    failureRedirect: '/login',
+  }),
+  (req, res) => {
+    createCookieWithJWT(req, res);
+  }
+);
+
+const createCookieWithJWT = (req, res) => {
+  const payload = {
+    iss: 'localhost:3000', // Issuer, usually the domain name
+    sub: req.user.username, // User, we can get it from the request
+    aud: 'localhost:3000', // Audience, may change (i.e. /part1, /part2...)
+    exp: Math.floor(Date.now() / 1000) + 604800, // Expiration, when we want the token to expire (in this case 1 week from now)
+    role: 'user', // Private JWT field
+  };
+  const token = jwt.sign(payload, jwtSecret);
+
+  var cookie = req.cookies.jwtCookie;
+  if (cookie === undefined) {
+    res.cookie('jwtCookie', token, {
+      maxAge: cookieExpire,
+      httpOnly: true,
+    });
+    console.log('Cookie created');
+    cookieTimer = setTimeout(
+      () => console.log('Cookie has expired'),
+      cookieExpire
+    );
+  } else {
+    console.log('Cookie already exists');
+  }
+  res.redirect('/');
+};
 
 app.listen(port, () => {
   console.log(`Listening at http://localhost:${port}`);
