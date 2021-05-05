@@ -15,9 +15,12 @@
     <b><p>THE FORTUNE TELLER</p></b>
     <br />
     <p><%=fortune%></p>
+    <form action="http://localhost:3000/">
+      <input type="submit" value="MORE FORTUNE!" />
+    </form>
     <br />
-    <a href="/">I want more fortune</a>
-    <br />
-    <a href="/logout">Logout</a>
+    <form action="http://localhost:3000/logout">
+      <input type="submit" value="Logout" />
+    </form>
   </body>
 </html>
