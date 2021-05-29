@@ -19,7 +19,7 @@ User.create([
   },
 ])
   .then((user) => {
-    console.log(`${user.length} users created`);
+    console.log(`${user.length} users seeded on the db`);
   })
   .catch((err) => {
     console.log(err);
