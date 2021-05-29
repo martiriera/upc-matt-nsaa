@@ -11,6 +11,9 @@ const cookieParser = require('cookie-parser');
 const UserModel = require('./db/user');
 const mongoose = require('mongoose');
 
+const radclient = require('radclient')
+const constants = require('./radiusOptions')
+
 const jwtSecret = require('crypto').randomBytes(16); // Create HMAC secret of 256 bits (16 random bytes)
 const port = 3000;
 const cookieExpire = 30000; // Expire time of the cookie (now 30s for testing). It may be changed to match JWT exp claim.
@@ -74,6 +77,43 @@ passport.use(
   )
 );
 
+passport.use(
+  'radius',
+  new LocalStrategy(
+    {
+      usernameField: 'username',
+      passwordField: 'password',
+      session: false
+    },
+    function (username, password, done) {
+      const packet = {
+        code: 'Access-Request',
+        secret: 'testing123',
+        identifier: 123,
+        attributes: [
+          ['NAS-IP-Address', '127.0.1.1'],
+          ['User-Name', `${username}@upc.edu`],
+          ['User-Password', password]
+        ]
+      }
+      radclient(packet, constants.OPTIONS, function (err, response) {
+        console.log(packet)
+        console.log(response);
+        if (response.code === 'Access-Accept') {
+          const user = { username: constants.PACKET.attributes[3] }
+          return done(null, user, { message: 'Logged in successfully (Access-Accept)' })
+        } else if (response.code === 'Access-Reject') {
+          return done(null, false, { message: 'Can not log in (Acces-Reject)' })
+        } else {
+          return done(null, false, { message: `Error: ${err}` })
+        }
+      })
+    })
+)
+
+// https://www.npmjs.com/package/node-radius-client
+// https://www.npmjs.com/package/radclient
+
 const cookieExtractor = function (req) {
   var token = null;
   if (req && req.cookies) {
@@ -96,6 +136,7 @@ passport.use(
 );
 
 passport.use(
+  'github',
   new GitHubStrategy(
     {
       clientID: process.env.CLIENT_ID,
@@ -103,7 +144,7 @@ passport.use(
       callbackURL: 'http://localhost:3000/login/oauth/access_token', // Callback of the server
     },
     function (accessToken, refreshToken, profile, cb) {
-      return cb(null, {username: profile.username}, { message: 'Logged in successfully' });
+      return cb(null, { username: profile.username }, { message: 'Logged in successfully' });
     }
   )
 );
@@ -138,7 +179,7 @@ app.get('/logout', (req, res) => {
 app.post(
   '/login',
   // We add a middleware "on the fly" to authenticate
-  passport.authenticate('local', {
+  passport.authenticate('radius', {
     session: false,
     failureRedirect: '/bad-credentials',
   }), // If fail, redirect to bad credentials view
