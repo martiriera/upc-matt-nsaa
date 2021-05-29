@@ -100,7 +100,7 @@ passport.use(
         console.log(packet)
         console.log(response);
         if (response.code === 'Access-Accept') {
-          const user = { username: constants.PACKET.attributes[3] }
+          const user = { username: username }
           return done(null, user, { message: 'Logged in successfully (Access-Accept)' })
         } else if (response.code === 'Access-Reject') {
           return done(null, false, { message: 'Can not log in (Acces-Reject)' })
